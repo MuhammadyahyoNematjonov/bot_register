@@ -1,11 +1,13 @@
 import { on } from "events";
 import { Ctx, On, Start, Update } from "nestjs-telegraf";
 import { UserState } from "src/common/user.state";
+import { PrismaService } from "src/databases/prisma.service";
 import { Context } from "telegraf";
 
 
 @Update()
 export class Botup {
+  constructor(private prisma:PrismaService){}
   @Start()
   async start(@Ctx() ctx: Context) {
 
@@ -67,11 +69,26 @@ export class Botup {
 
   @On("contact")
   async sTexts(@Ctx() ctx: Context){
-    console.log(ctx);
-    
+    const states = UserState.get(ctx.from!.id)
+    if('contact' in  ctx.message!){
+      let nomer =ctx.message.contact.phone_number
+      let {ism,Familya,yosh} = states!.data
+      await this.prisma.user.create({
+            data:{
+                firstname:ism!,
+                lastname:Familya!,
+                age:yosh!,
+                contact:nomer,
+                telegramId:ctx.from!.id
+            }
+        })
+    }
+
+    ctx.reply("✅ Maʼlumot saqlandi")
+    }    
   }
 
 
 
 
-}
+
